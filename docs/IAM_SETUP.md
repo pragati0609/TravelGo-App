@@ -1,98 +1,60 @@
 # TravelGo: AWS IAM Role Setup Guide
 
-> **Epic 5**: IAM Role Setup — Tasks 10 & 11
+> **Epic 5**: IAM Role Setup — Tasks 10 & 11  
+> **SkillWallet Course**: AWS Cloud Practitioner
 
 ---
 
-## Overview
+## Task 10: Create IAM Role
 
-TravelGo's Flask backend on EC2 needs secure, credential-free access to two AWS services:
-- **Amazon DynamoDB** – for reading and writing user and booking records
-- **Amazon SNS** – for publishing real-time booking notification messages
+An **IAM Role** allows your Amazon EC2 instance to securely communicate with DynamoDB and SNS without saving permanent secret access keys in the code or environment files.
 
-Instead of hardcoding `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, we attach an **IAM Role** with a scoped policy directly to the EC2 instance. Boto3 automatically fetches short-lived temporary credentials from the instance metadata endpoint (`IMDSv2`).
-
----
-
-## Task 10: Create the IAM Role
-
-### Step-by-Step (AWS Management Console)
-
-1. Open **IAM → Roles → Create role**
-2. **Trusted entity type**: `AWS Service`
-3. **Use case**: `EC2`
-4. Click **Next**
+### Step-by-Step Console Walkthrough:
+1. Log in to the **[AWS Management Console](https://aws.amazon.com/console/)**.
+2. In the top search bar, type **IAM** and select **IAM (Identity and Access Management)**.
+3. In the left navigation menu, click **Roles**, then click the blue **"Create role"** button.
+4. **Step 1 - Select trusted entity**:
+   - **Trusted entity type**: Select **AWS service**.
+   - **Use case**: Select **EC2** (Allows EC2 instances to call AWS services on your behalf).
+   - Click **Next**.
 
 ---
 
-## Task 11: Attach Policies to the IAM Role
+## Task 11: Attach Policies
 
-### Policies to Attach (Principle of Least Privilege)
+### Attach the Required AWS Managed Policies:
 
-| Policy | ARN | Purpose |
-|---|---|---|
-| `AmazonDynamoDBFullAccess` | `arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess` | Read/Write to `TravelGo_Users` and `TravelGo_Bookings` tables |
-| `AmazonSNSFullAccess` | `arn:aws:iam::aws:policy/AmazonSNSFullAccess` | Publish messages to `BookingConfirmation` topic |
-| `CloudWatchAgentServerPolicy` | `arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy` | Publish application logs to CloudWatch |
+On the **Add permissions** page, search for and check the following two policies:
 
-### Steps:
-1. On the **Permissions** page, search and check each policy above
-2. Click **Next**
-3. **Role name**: `TravelGo-EC2-Role`
-4. **Description**: `Allows TravelGo EC2 Flask app to access DynamoDB and SNS without hardcoded keys`
-5. Click **Create role**
+| Policy Name | Description & Purpose |
+|---|---|
+| **`AmazonDynamoDBFullAccess`** | Allows EC2 to perform read/write operations on DynamoDB (`travel-Users` and `Bookings` tables). |
+| **`AmazonSNSFullAccess`** | Grants EC2 the ability to send notifications via SNS (publish to `BookingConfirmation` topic). |
+
+### Finalize Role Creation:
+1. Search for `AmazonDynamoDBFullAccess` in the filter box and check the box next to it.
+2. Clear the search, then search for `AmazonSNSFullAccess` and check the box next to it.
+3. Click **Next**.
+4. **Role details**:
+   - **Role name**: Enter `TravelGo-EC2-Role` (or `travelgo-ec2-role`)
+   - **Description**: `Allows TravelGo EC2 Flask application to access DynamoDB and SNS without hardcoded credentials.`
+5. Click **"Create role"** at the bottom right.
+6. A green banner will confirm: *Role `TravelGo-EC2-Role` created.* ✅
 
 ---
 
-## Attach Role to Your EC2 Instance
+## Attaching the Role to Your EC2 Instance (Used in Epic 6 & 7)
 
-1. Open **EC2 → Instances → Select your TravelGo instance**
-2. Click **Actions → Security → Modify IAM role**
-3. Select `TravelGo-EC2-Role` from the dropdown
-4. Click **Update IAM role**
+When launching or managing your EC2 instance:
+1. Open the **Amazon EC2 Console &rarr; Instances**.
+2. Select your `TravelGo-Server` instance.
+3. Click **Actions &rarr; Security &rarr; Modify IAM role**.
+4. Select `TravelGo-EC2-Role` from the dropdown.
+5. Click **Update IAM role**.
 
-### Verify from EC2 Instance:
+### Verification from EC2:
+Once attached, Boto3 inside Flask automatically retrieves temporary credentials via IMDSv2:
 ```bash
-# This should return the role name and temporary credentials
 curl http://169.254.169.254/latest/meta-data/iam/security-credentials/
 ```
-
----
-
-## Inline Policy (Minimum Privilege Alternative)
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:PutItem",
-        "dynamodb:GetItem",
-        "dynamodb:UpdateItem",
-        "dynamodb:Query",
-        "dynamodb:Scan",
-        "dynamodb:CreateTable",
-        "dynamodb:ListTables",
-        "dynamodb:DescribeTable"
-      ],
-      "Resource": [
-        "arn:aws:dynamodb:ap-south-1:*:table/TravelGo_Users",
-        "arn:aws:dynamodb:ap-south-1:*:table/TravelGo_Bookings",
-        "arn:aws:dynamodb:ap-south-1:*:table/TravelGo_Bookings/index/*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "sns:Publish",
-        "sns:CreateTopic",
-        "sns:Subscribe",
-        "sns:ListTopics"
-      ],
-      "Resource": "arn:aws:sns:ap-south-1:*:BookingConfirmation"
-    }
-  ]
-}
-```
+No `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` needs to be saved in `.env`!

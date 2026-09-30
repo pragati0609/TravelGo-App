@@ -1,85 +1,83 @@
-# TravelGo: DynamoDB Database Setup Guide
+# TravelGo: DynamoDB Database Creation and Setup Guide
 
-> **Epic 3**: DynamoDB Setup — Tasks 6 & 7
-
----
-
-## Task 6: Navigate to DynamoDB in AWS Console
-
-1. Sign in at **https://console.aws.amazon.com/**
-2. In the search bar, type **DynamoDB** and press Enter
-3. In the top-right region selector, confirm you are in **Asia Pacific (Mumbai) ap-south-1**
-4. Click **Get Started** or **Tables** in the left sidebar
+> **Epic 3**: DynamoDB Database Creation and Setup — Tasks 6 & 7  
+> **SkillWallet Course**: AWS Cloud Practitioner
 
 ---
 
-## Task 7: Create DynamoDB Tables
+## Task 6: Navigate to DynamoDB
 
-TravelGo uses **two tables** to store user credentials and booking records.
+1. Log in to the **[AWS Management Console](https://aws.amazon.com/console/)** (or via Troven temporary lab credentials).
+2. Ensure your active AWS region is **Asia Pacific (Mumbai) `ap-south-1`** (top-right header).
+3. In the top search bar, type **DynamoDB** and press Enter.
+4. On the DynamoDB Dashboard, click the orange **"Create table"** button (or navigate to **Tables** in the left sidebar and click **Create table**).
 
-### Option A: Automated (Recommended) — Run setup_dynamodb.py
+---
+
+## Task 7: Create DynamoDB Tables for Storing Registration Details and Booking Records
+
+TravelGo uses **two dedicated DynamoDB tables**:
+1. **`travel-Users`**: Stores registered user accounts and authentication credentials.
+2. **`Bookings`**: Stores travel and lodging reservations across buses, trains, flights, and hotels.
+
+---
+
+### Step 1: Create the `travel-Users` Table
+
+| Setting | Value | Description |
+|---|---|---|
+| **Table name** | `travel-Users` | Table for storing user registration and login data |
+| **Partition key** | `Email` | Type: **String** |
+| **Sort key** | *(Leave blank)* | Single-attribute primary key |
+| **Table settings** | **Default settings** (or On-Demand) | Free-tier / Pay per request |
+
+**Detailed Console Steps:**
+1. In the **Table details** section:
+   - **Table name**: Enter `travel-Users`
+   - **Partition key**: Enter `Email` and select **String** from the dropdown
+2. Leave the **Sort key** field blank.
+3. Under **Table settings**, select **Default settings** (or choose **Customize settings** &rarr; **On-demand** capacity mode).
+4. Click the orange **"Create table"** button at the bottom of the page.
+5. Wait ~15 seconds until the status shows as **Active** ✅.
+
+---
+
+### Step 2: Create the `Bookings` Table
+
+| Setting | Value | Description |
+|---|---|---|
+| **Table name** | `Bookings` | Table for storing travel & accommodation records |
+| **Partition key** | `email` | Type: **String** |
+| **Sort key** | `booking_id` | Type: **String** |
+| **Table settings** | **Default settings** (or On-Demand) | Composite primary key |
+
+**Detailed Console Steps:**
+1. Return to the Tables list and click **"Create table"** again.
+2. In the **Table details** section:
+   - **Table name**: Enter `Bookings`
+   - **Partition key**: Enter `email` and select **String**
+   - **Sort key**: Enter `booking_id` and select **String**
+3. Under **Table settings**, choose **Default settings** (or **On-demand** capacity).
+4. Click **"Create table"**.
+5. Wait until the status changes to **Active** ✅.
+
+---
+
+## Automated Creation (Optional Script)
+
+You can also run the pre-configured automation script to create both tables in your account:
 
 ```bash
-# From your local machine (with AWS credentials configured) or on EC2
-cd TravelGo-App
-source venv/bin/activate  # Windows: .\venv\Scripts\Activate
+# From TravelGo-App directory:
 python setup_dynamodb.py
 ```
 
-The script auto-creates both tables with the correct schema and waits until they are `ACTIVE`.
+This will automatically create `travel-Users` (Partition Key: `Email`) and `Bookings` (Partition Key: `email`, Sort Key: `booking_id`).
 
 ---
 
-### Option B: Manual via AWS Console
+## Verification Checklist
 
-#### Table 1: TravelGo_Users
-
-| Setting | Value |
-|---|---|
-| Table name | `TravelGo_Users` |
-| Partition key | `email` (String) |
-| Sort key | *(none)* |
-| Table class | DynamoDB Standard |
-| Read/Write capacity | **On-demand** (PAY_PER_REQUEST) |
-
-**Steps:**
-1. DynamoDB Console → **Create table**
-2. Table name: `TravelGo_Users`
-3. Partition key: `email` → Type: **String**
-4. Leave Sort key blank
-5. Table settings: **Customize settings** → Capacity mode: **On-demand**
-6. Click **Create table**
-
----
-
-#### Table 2: TravelGo_Bookings (with GSI)
-
-| Setting | Value |
-|---|---|
-| Table name | `TravelGo_Bookings` |
-| Partition key | `booking_id` (String) |
-| Sort key | *(none)* |
-| Global Secondary Index | `UserBookingsIndex` |
-| GSI Partition key | `user_email` (String) |
-| GSI Sort key | `created_at` (String) |
-| Billing mode | On-demand (PAY_PER_REQUEST) |
-
-**Steps:**
-1. DynamoDB Console → **Create table**
-2. Table name: `TravelGo_Bookings`
-3. Partition key: `booking_id` → Type: **String**
-4. **Additional settings** → **Global Secondary Indexes** → **Create index**:
-   - Index name: `UserBookingsIndex`
-   - Partition key: `user_email` → **String**
-   - Sort key: `created_at` → **String**
-   - Projected attributes: **All**
-5. Billing: **On-demand**
-6. Click **Create table**
-
----
-
-## Verify Tables in Console
-
-After creation (takes ~30 seconds):
-- Both tables show `Active` status in DynamoDB → Tables
-- Click `TravelGo_Bookings` → **Indexes** tab → confirm `UserBookingsIndex` is `Active`
+In the AWS Console under **DynamoDB &rarr; Tables**, verify:
+- [x] `travel-Users` status is **Active** with Partition key `Email (String)`.
+- [x] `Bookings` status is **Active** with Partition key `email (String)` and Sort key `booking_id (String)`.

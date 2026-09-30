@@ -1,66 +1,46 @@
 # TravelGo: AWS Account Setup Guide
 
-> **Epic 2**: AWS Account Setup — Task 5
+> **Epic 2**: AWS Account Setup and Login — Task 5  
+> **SkillWallet Course**: AWS Cloud Practitioner
 
 ---
 
-## Task 5: AWS Account Setup and Login
-
-### Step 1: Create or Login to Your AWS Account
-
-1. Visit **https://console.aws.amazon.com/**
-2. If you don't have an account, click **Create a new AWS account**
-   - Enter your email, set a root password
-   - Add billing info (a valid credit/debit card — Free Tier will not charge you)
-   - Verify phone number
-   - Select **Free Tier** plan
-3. Sign in to the **AWS Management Console**
+> [!IMPORTANT]  
+> **Course Notice**: *This is for your understanding only, please refrain from creating a personal AWS account. A temporary AWS account will be provided via Troven on your course portal.*
 
 ---
 
-### Step 2: Create an IAM User with Programmatic Access
+## 1. AWS Account Creation Walkthrough (Reference)
 
-> **Best Practice**: Never use your root account credentials for application access.
+For standard reference and conceptual understanding:
 
-1. Open **IAM → Users → Create user**
-2. **User name**: `travelgo-developer`
-3. **Permission**: Attach policies directly → select:
-   - `AmazonDynamoDBFullAccess`
-   - `AmazonSNSFullAccess`
-4. Click **Create user**
-5. Open the user → **Security credentials** tab → **Create access key**
-6. **Use case**: `Application running outside AWS`
-7. **Download the `.csv` file** — you will NOT be able to view the secret key again
-
----
-
-### Step 3: Configure AWS CLI
-
-```bash
-# Install AWS CLI (if not already installed)
-# Windows: Download MSI from https://aws.amazon.com/cli/
-# Linux/Mac: pip install awscli
-
-aws configure
-# AWS Access Key ID: AKIA...
-# AWS Secret Access Key: xxxxx
-# Default region name: ap-south-1
-# Default output format: json
-```
-
-### Verify Configuration:
-```bash
-aws sts get-caller-identity
-# Should return your account ID and user ARN
-```
+1. **Visit AWS**: Go to the AWS website ([https://aws.amazon.com/](https://aws.amazon.com/)).
+2. **Start Registration**: Click on the **"Create an AWS Account"** button.
+3. **Credentials**: Follow the prompts to enter your email address and choose a strong password.
+4. **Account Information**: Provide the required account information, including your full name, address, and phone number.
+5. **Payment Information**: Enter payment details. *(Note: While AWS offers a free tier, a valid debit or credit card is required for identity verification).*
+6. **Identity Verification**: Complete the phone call / SMS identity verification process.
+7. **Support Plan**: Choose the **Basic Support Plan** (Free tier eligible, sufficient for learning and project deployment).
+8. **Account Ready**: Once verified, your account is activated and ready for access.
 
 ---
 
-### Step 4: Set AWS Region to Mumbai (ap-south-1)
+## 2. Log In to the AWS Management Console
 
-All TravelGo resources are created in **ap-south-1 (Mumbai)** for lowest latency from India.
+1. Navigate to the **[AWS Management Console](https://aws.amazon.com/console/)** (or click the login link provided inside your Troven lab dashboard).
+2. Enter your credentials:
+   - If using Troven temporary credentials: Log in as **IAM User** with the provided Account ID, Username, and Password.
+   - If using direct login: Sign in as Root or IAM user.
+3. Set your active region in the navigation bar to **Asia Pacific (Mumbai) `ap-south-1`** (or the default region specified by your lab).
 
-In your `.env` file:
+---
+
+## 3. Environment Variable Alignment
+
+When deploying locally or configuring your EC2 instance, ensure the AWS region matches your console:
+
+In [`.env`](../.env):
 ```env
 AWS_REGION=ap-south-1
 ```
+*(Leave `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` empty when running on EC2 with an attached IAM Role, as temporary tokens are fetched automatically).*

@@ -53,3 +53,21 @@ def cancel_booking(booking_id):
         flash(f"Could not cancel booking: {res.get('error')}", 'danger')
 
     return redirect(url_for('dashboard.index'))
+
+@dashboard_bp.route('/remove-booking/<booking_id>', methods=['GET', 'POST'])
+def remove_booking(booking_id):
+    """Deletes a booking from DynamoDB and sends a cancellation notification via SNS."""
+    if 'user_email' not in session:
+        flash('Unauthorized. Please login.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    user_email = session['user_email']
+    res = aws_service.remove_booking(booking_id=booking_id, user_email=user_email)
+
+    if res.get('success'):
+        flash(f"Booking {booking_id} has been permanently removed from database. Notification dispatched via AWS SNS.", 'success')
+    else:
+        flash(f"Could not remove booking: {res.get('error')}", 'danger')
+
+    return redirect(url_for('dashboard.index'))
+

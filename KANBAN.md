@@ -24,8 +24,8 @@
 | **12** | **Epic 6: EC2 Instance Setup** | Load your Project Files to GitHub | ✅ Done | `README.md`, `.gitignore`, all source code ready for `git push` |
 | **13** | **Epic 6: EC2 Instance Setup** | Launch an EC2 instance to host Flask | 📋 Guide Ready | [`docs/EC2_SETUP.md`](docs/EC2_SETUP.md) — t2.micro Ubuntu/AL2023 launch steps |
 | **14** | **Epic 6: EC2 Instance Setup** | Configure Security Groups | 📋 Guide Ready | [`docs/EC2_SETUP.md`](docs/EC2_SETUP.md) — Ports 22, 80, 443, 5000 configured |
-| **15** | **Epic 7: Deployment Using EC2** | Install Software on the EC2 Instance | ✅ Done | `deploy.sh` — Full automated setup: Python, venv, pip, gunicorn, systemd service |
-| **16** | **Epic 7: Deployment Using EC2** | Clone Your Flask Project from GitHub | ✅ Done | `deploy.sh` — Git clone + config + gunicorn start |
+| **15** | **Epic 7: Deployment Using EC2** | Install Software on the EC2 Instance | ✅ Done | `deploy.sh` — Exact SkillWallet commands: `apt update`, `python3-pip`, `git`, `python3-venv`, `venv` create & activate |
+| **16** | **Epic 7: Deployment Using EC2** | Clone Your Flask Project from GitHub | ✅ Done | `deploy.sh` + `docs/EC2_SETUP.md` — `git clone`, `export SNS_TOPIC_ARN`, `pip install flask boto3`, `sudo -E venv/bin/python3 app.py` |
 | **17** | **Epic 8: Testing and Deployment** | Functional Testing | ✅ Done | [`docs/TESTING.md`](docs/TESTING.md) + all flows tested locally (register, login, book, cancel, dashboard, SNS) |
 | **18** | **Conclusion** | Final-Thoughts | ✅ Done | [`docs/CONCLUSION.md`](docs/CONCLUSION.md) — Architecture diagram, all scenarios verified, skills demonstrated |
 

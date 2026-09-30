@@ -48,6 +48,11 @@ def create_app(config_name=None):
 app = create_app()
 
 if __name__ == '__main__':
-    # Default Flask port 5000 as specified in course EC2 security group requirements
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Epic 1: Start the Flask application on all network interfaces at port 80 with debug mode enabled
+    port = int(os.environ.get('PORT', 80))
+    try:
+        app.run(host='0.0.0.0', port=port, debug=True)
+    except (PermissionError, OSError):
+        # Fallback to port 5000 on machines where port 80 requires administrator privileges
+        print(f"Port {port} requires elevated privileges; launching on port 5000...")
+        app.run(host='0.0.0.0', port=5000, debug=True)

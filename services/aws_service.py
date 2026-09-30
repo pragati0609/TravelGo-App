@@ -14,8 +14,8 @@ class AWSService:
     def __init__(self, app=None):
         self.app = app
         self.region = os.environ.get('AWS_REGION', 'ap-south-1')
-        self.users_table_name = os.environ.get('DYNAMODB_USERS_TABLE', 'TravelGo_Users')
-        self.bookings_table_name = os.environ.get('DYNAMODB_BOOKINGS_TABLE', 'TravelGo_Bookings')
+        self.users_table_name = os.environ.get('DYNAMODB_USERS_TABLE', 'travel-Users')
+        self.bookings_table_name = os.environ.get('DYNAMODB_BOOKINGS_TABLE', 'Bookings')
         self.sns_topic_arn = os.environ.get('SNS_TOPIC_ARN', '')
         self.use_mock = os.environ.get('USE_MOCK_AWS', 'auto').lower()
 
@@ -119,7 +119,8 @@ class AWSService:
         user_id = str(uuid.uuid4())
 
         user_item = {
-            'email': email,
+            'Email': email,                     # Exact PK for travel-Users (SkillWallet)
+            'email': email,                     # Lowercase alias
             'user_id': user_id,
             'name': full_name.strip(),          # Exact ER Diagram attribute
             'full_name': full_name.strip(),     # Display alias
@@ -364,6 +365,43 @@ class AWSService:
         )
 
         return {"success": True, "booking": updated_item}
+
+    def remove_booking(self, booking_id, user_email):
+        """Deletes a booking from the database and sends a cancellation notification via SNS."""
+        user_email = user_email.strip().lower()
+
+        # Fetch booking details for notification before deletion
+        booking_details = None
+        if self._is_live_aws:
+            try:
+                table = self.dynamodb.Table(self.bookings_table_name)
+                res = table.get_item(Key={'booking_id': booking_id})
+                booking_details = res.get('Item')
+                table.delete_item(
+                    Key={'booking_id': booking_id},
+                    ConditionExpression="user_email = :email",
+                    ExpressionAttributeValues={':email': user_email}
+                )
+            except Exception as e:
+                logger.error(f"DynamoDB delete_item error: {e}")
+                return {"success": False, "error": str(e)}
+        else:
+            booking_details = self._mock_bookings.pop(booking_id, None)
+            if not booking_details or booking_details.get('user_email') != user_email:
+                return {"success": False, "error": "Booking not found or unauthorized."}
+
+        # Send cancellation notification via SNS
+        mode = booking_details.get('travel_mode', booking_details.get('type', 'trip')) if booking_details else 'trip'
+        self.send_sns_notification(
+            subject=f"TravelGo: Booking Removed ({booking_id})",
+            message=(
+                f"Dear Customer,\n\n"
+                f"Your booking record ({booking_id}) for {mode.upper()} has been successfully removed from TravelGo.\n\n"
+                f"If you did not initiate this removal, please contact TravelGo support immediately.\n\n"
+                f"Regards,\nTravelGo Team"
+            )
+        )
+        return {"success": True, "booking_id": booking_id}
 
     # -------------------------------------------------------------
     # SNS Notification Service (Scenario 2)

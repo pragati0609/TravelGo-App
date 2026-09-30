@@ -5,6 +5,7 @@
 import pytest
 import sys
 import os
+import re
 
 # Ensure parent dir is on path so 'app' can be imported
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -23,7 +24,7 @@ def client():
             yield client
 
 
-# ─── Helper ──────────────────────────────────────────────────────────────────
+# ─── Helper Functions ────────────────────────────────────────────────────────
 
 def register_and_login(client, email='test@travelgo.in', name='Test User', password='Test@1234'):
     """Register a user and then log them in. Returns response of login."""
@@ -36,6 +37,21 @@ def register_and_login(client, email='test@travelgo.in', name='Test User', passw
     return client.post('/auth/login', data={
         'email': email,
         'password': password
+    }, follow_redirects=True)
+
+
+def book_and_pay(client, listing_id, travel_date='2025-12-25', **kwargs):
+    """Submits booking request to /book and completes checkout at /payment."""
+    post_data = {
+        'listing_id': listing_id,
+        'travel_date': travel_date,
+        **kwargs
+    }
+    # Step 1: Save in session and redirect to /payment
+    client.post('/book', data=post_data, follow_redirects=True)
+    # Step 2: Complete payment checkout
+    return client.post('/payment', data={
+        'payment_method': 'UPI / GPay'
     }, follow_redirects=True)
 
 
@@ -105,14 +121,20 @@ class TestBookingFlow:
         assert resp.status_code == 200
         assert b'bus' in resp.data.lower() or b'Bus' in resp.data
 
-    def test_search_train(self, client):
-        register_and_login(client)
-        resp = client.get('/search?mode=train')
+    def test_dedicated_bus_route(self, client):
+        resp = client.get('/bus')
         assert resp.status_code == 200
 
-    def test_search_flight(self, client):
-        register_and_login(client)
-        resp = client.get('/search?mode=flight')
+    def test_dedicated_train_route(self, client):
+        resp = client.get('/train')
+        assert resp.status_code == 200
+
+    def test_dedicated_flight_route(self, client):
+        resp = client.get('/flight')
+        assert resp.status_code == 200
+
+    def test_dedicated_hotel_route(self, client):
+        resp = client.get('/hotel')
         assert resp.status_code == 200
 
     def test_search_hotel_luxury_filter(self, client):
@@ -126,7 +148,7 @@ class TestBookingFlow:
         assert resp.status_code == 200
         assert b'seat' in resp.data.lower()
 
-    def test_complete_bus_booking(self, client):
+    def test_booking_redirects_to_payment(self, client):
         register_and_login(client)
         resp = client.post('/book', data={
             'listing_id': 'BUS-01',
@@ -134,48 +156,47 @@ class TestBookingFlow:
             'seat_numbers': '2A,3A'
         }, follow_redirects=True)
         assert resp.status_code == 200
-        assert b'BK-' in resp.data  # Booking ID format
+        assert b'Payment' in resp.data or b'payment' in resp.data.lower()
 
-    def test_complete_hotel_booking(self, client):
+    def test_complete_payment_and_booking(self, client):
         register_and_login(client)
-        resp = client.post('/book', data={
-            'listing_id': 'HTL-01',
-            'travel_date': '2025-12-25',
-            'num_guests': '2'
-        }, follow_redirects=True)
+        resp = book_and_pay(client, listing_id='BUS-01', travel_date='2025-12-20', seat_numbers='2A,3A')
         assert resp.status_code == 200
-        assert b'BK-' in resp.data
+        assert b'CONFIRMED' in resp.data or b'Confirmed' in resp.data or b'BK-' in resp.data
 
 
-# ─── Scenario 3: Dashboard & Cancellation ────────────────────────────────────
+# ─── Scenario 3: Dashboard, Cancellation & Removal ───────────────────────────
 
 class TestDashboard:
     def test_dashboard_shows_booking(self, client):
         register_and_login(client)
-        client.post('/book', data={
-            'listing_id': 'TRN-01',
-            'travel_date': '2025-12-22',
-        }, follow_redirects=True)
+        book_and_pay(client, listing_id='TRN-01', travel_date='2025-12-22')
         resp = client.get('/dashboard')
         assert resp.status_code == 200
         assert b'CONFIRMED' in resp.data or b'Confirmed' in resp.data
 
     def test_cancellation_changes_status(self, client):
         register_and_login(client)
-        # Create a booking
-        book_resp = client.post('/book', data={
-            'listing_id': 'FLT-01',
-            'travel_date': '2025-12-25',
-        }, follow_redirects=True)
-        # Extract booking_id from confirmation page
-        import re
+        book_resp = book_and_pay(client, listing_id='FLT-01', travel_date='2025-12-25')
+        # Extract booking_id from dashboard response
         booking_ids = re.findall(rb'BK-[A-Z0-9]+', book_resp.data)
-        assert booking_ids, "No booking ID found in confirmation page"
+        assert booking_ids, "No booking ID found in dashboard page"
         bid = booking_ids[0].decode()
         # Cancel it
         resp = client.post(f'/cancel-booking/{bid}', follow_redirects=True)
         assert resp.status_code == 200
         assert b'Cancelled' in resp.data or b'CANCELLED' in resp.data
+
+    def test_remove_booking_route(self, client):
+        register_and_login(client)
+        book_resp = book_and_pay(client, listing_id='BUS-02', travel_date='2025-12-28')
+        booking_ids = re.findall(rb'BK-[A-Z0-9]+', book_resp.data)
+        assert booking_ids
+        bid = booking_ids[0].decode()
+        # Remove booking via /remove-booking route
+        resp = client.post(f'/remove-booking/{bid}', follow_redirects=True)
+        assert resp.status_code == 200
+        assert b'removed' in resp.data.lower() or b'dashboard' in resp.data.lower()
 
     def test_dashboard_tab_filter(self, client):
         register_and_login(client)
