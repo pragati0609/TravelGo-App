@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}TravelGo | Search Results - {{ mode.capitalize() }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search Bar Modification Header -->
+    <div class="card shadow-sm border-0 mb-4 bg-white p-3">
+        <form action="{{ url_for('booking.search') }}" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-2">
+                <select name="mode" class="form-select fw-semibold" onchange="this.form.submit()">
+                    <option value="bus" {% if mode == 'bus' %}selected{% endif %}>🚌 Buses</option>
+                    <option value="train" {% if mode == 'train' %}selected{% endif %}>🚆 Trains</option>
+                    <option value="flight" {% if mode == 'flight' %}selected{% endif %}>✈️ Flights</option>
+                    <option value="hotel" {% if mode == 'hotel' %}selected{% endif %}>🏨 Hotels</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="origin" class="form-control" value="{{ origin }}" placeholder="Origin City">
+            </div>
+            {% if mode != 'hotel' %}
+            <div class="col-md-3">
+                <input type="text" name="destination" class="form-control" value="{{ destination }}" placeholder="Destination">
+            </div>
+            {% endif %}
+            <div class="col-md-2">
+                <input type="date" name="date" class="form-control" value="{{ date }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                    <i class="bi bi-search me-1"></i>Update
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Mode Filters (e.g. Hotel Luxury / Budget filter) -->
+    {% if mode == 'hotel' %}
+    <div class="d-flex align-items-center justify-content-between mb-3 bg-white p-3 rounded shadow-sm">
+        <span class="fw-semibold text-secondary"><i class="bi bi-funnel me-1"></i>Filter by Preference:</span>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('booking.search', mode='hotel', origin=origin, category='all', date=date) }}" class="btn btn-sm {% if category == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All Hotels</a>
+            <a href="{{ url_for('booking.search', mode='hotel', origin=origin, category='luxury', date=date) }}" class="btn btn-sm {% if category == 'luxury' %}btn-primary{% else %}btn-outline-primary{% endif %}">👑 Luxury Suites</a>
+            <a href="{{ url_for('booking.search', mode='hotel', origin=origin, category='budget', date=date) }}" class="btn btn-sm {% if category == 'budget' %}btn-primary{% else %}btn-outline-primary{% endif %}">🏷️ Budget Friendly</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Results Section -->
+    <div class="row">
+        <div class="col-12">
+            <h5 class="fw-bold mb-3">
+                Available {{ mode.capitalize() }} Options
+                <span class="text-muted fw-normal fs-6">({{ results|length }} found)</span>
+            </h5>
+
+            {% if results %}
+                <div class="row g-3">
+                    {% for item in results %}
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm rounded-3 p-3 listing-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <h5 class="fw-bold mb-0 text-primary">{{ item.provider }}</h5>
+                                        {% if item.category == 'luxury' %}
+                                            <span class="badge bg-warning text-dark">Luxury</span>
+                                        {% elif item.category == 'budget' %}
+                                            <span class="badge bg-info text-dark">Budget</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-muted small mb-1">{{ item.type }}</p>
+                                    <div class="small text-warning">
+                                        <i class="bi bi-star-fill"></i> <span class="fw-bold text-dark">{{ item.rating }}</span> / 5.0
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 text-center my-2 my-md-0">
+                                    {% if mode == 'hotel' %}
+                                        <span class="badge bg-light text-dark p-2 border">
+                                            <i class="bi bi-geo-alt text-danger me-1"></i>Location: {{ item.origin }}
+                                        </span>
+                                        <p class="text-muted small mt-1 mb-0">{{ item.departure }} | {{ item.arrival }}</p>
+                                    {% else %}
+                                        <div class="d-flex justify-content-center align-items-center gap-3">
+                                            <div>
+                                                <div class="fw-bold fs-5">{{ item.departure }}</div>
+                                                <div class="text-muted small">{{ item.origin }}</div>
+                                            </div>
+                                            <div class="text-secondary small">
+                                                <i class="bi bi-arrow-right fs-4"></i>
+                                                <div>{{ item.duration }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold fs-5">{{ item.arrival }}</div>
+                                                <div class="text-muted small">{{ item.destination }}</div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-4 text-md-end">
+                                    <div class="fs-4 fw-bold text-success mb-1">₹{{ item.price }}</div>
+                                    <p class="text-muted small mb-2">{% if mode == 'hotel' %}per night / room{% else %}per passenger{% endif %}</p>
+
+                                    {% if mode == 'bus' %}
+                                        <!-- Bus Dynamic Seat Picker Flow -->
+                                        <a href="{{ url_for('booking.select_seats', listing_id=item.id, date=date) }}" class="btn btn-primary fw-semibold px-4">
+                                            <i class="bi bi-grid-3x3-gap-fill me-1"></i>Select Seats
+                                        </a>
+                                    {% else %}
+                                        <!-- Direct Instant Reservation Flow -->
+                                        <form action="{{ url_for('booking.book') }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="listing_id" value="{{ item.id }}">
+                                            <input type="hidden" name="travel_mode" value="{{ item.mode }}">
+                                            <input type="hidden" name="provider_name" value="{{ item.provider }}">
+                                            <input type="hidden" name="origin" value="{{ item.origin }}">
+                                            <input type="hidden" name="destination" value="{{ item.destination }}">
+                                            <input type="hidden" name="travel_date" value="{{ date }}">
+                                            <input type="hidden" name="total_amount" value="{{ item.price }}">
+                                            <input type="hidden" name="room_preference" value="{{ item.type }}">
+                                            <button type="submit" class="btn btn-success fw-semibold px-4">
+                                                <i class="bi bi-check2-circle me-1"></i>Book Now
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card border-0 shadow-sm p-5 text-center bg-white">
+                    <i class="bi bi-search fs-1 text-muted mb-3"></i>
+                    <h4>No Travel Options Found</h4>
+                    <p class="text-muted">Try changing the origin, destination, or category filter.</p>
+                    <div>
+                        <a href="{{ url_for('booking.index') }}" class="btn btn-outline-primary">Back to Home</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

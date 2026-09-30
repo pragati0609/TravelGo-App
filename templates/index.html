@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}TravelGo | Home - Cloud-Powered Booking{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white text-center py-5 position-relative">
+    <div class="container py-4 position-relative z-1">
+        <h1 class="display-4 fw-bold mb-3">Travel Faster, Smarter & Real-Time</h1>
+        <p class="lead mb-4 text-light opacity-90 mx-auto" style="max-width: 650px;">
+            Book Buses, Trains, Flights, and Hotels on a high-availability cloud architecture powered by AWS EC2, DynamoDB, and Amazon SNS.
+        </p>
+
+        <!-- Search Card -->
+        <div class="card shadow-lg border-0 text-dark mx-auto booking-card" style="max-width: 900px;">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <ul class="nav nav-pills nav-fill" id="searchTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-semibold" id="bus-tab" data-bs-toggle="tab" data-bs-target="#bus-panel" type="button">
+                            <i class="bi bi-bus-front me-1"></i>Buses
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" id="train-tab" data-bs-toggle="tab" data-bs-target="#train-panel" type="button">
+                            <i class="bi bi-train-front me-1"></i>Trains
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" id="flight-tab" data-bs-toggle="tab" data-bs-target="#flight-panel" type="button">
+                            <i class="bi bi-airplane me-1"></i>Flights
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" id="hotel-tab" data-bs-toggle="tab" data-bs-target="#hotel-panel" type="button">
+                            <i class="bi bi-building me-1"></i>Hotels
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-4">
+                <div class="tab-content" id="searchPanels">
+                    <!-- Bus Panel -->
+                    <div class="tab-pane fade show active" id="bus-panel">
+                        <form action="{{ url_for('booking.search') }}" method="GET" class="row g-3 text-start">
+                            <input type="hidden" name="mode" value="bus">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">From City</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" name="origin" class="form-control" value="Hyderabad" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">To Destination</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                                    <input type="text" name="destination" class="form-control" value="Bangalore" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Journey Date</label>
+                                <input type="date" name="date" class="form-control" value="2026-10-01" required>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                    <i class="bi bi-search me-1"></i>Search Buses
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Train Panel -->
+                    <div class="tab-pane fade" id="train-panel">
+                        <form action="{{ url_for('booking.search') }}" method="GET" class="row g-3 text-start">
+                            <input type="hidden" name="mode" value="train">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">From Station</label>
+                                <input type="text" name="origin" class="form-control" value="Hyderabad" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">To Station</label>
+                                <input type="text" name="destination" class="form-control" value="Bangalore" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Date</label>
+                                <input type="date" name="date" class="form-control" value="2026-10-01" required>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                    <i class="bi bi-search me-1"></i>Search Trains
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Flight Panel -->
+                    <div class="tab-pane fade" id="flight-panel">
+                        <form action="{{ url_for('booking.search') }}" method="GET" class="row g-3 text-start">
+                            <input type="hidden" name="mode" value="flight">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Departure Airport</label>
+                                <input type="text" name="origin" class="form-control" value="Hyderabad" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Arrival Airport</label>
+                                <input type="text" name="destination" class="form-control" value="Bangalore" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Date</label>
+                                <input type="date" name="date" class="form-control" value="2026-10-01" required>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                    <i class="bi bi-search me-1"></i>Search Flights
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Hotel Panel -->
+                    <div class="tab-pane fade" id="hotel-panel">
+                        <form action="{{ url_for('booking.search') }}" method="GET" class="row g-3 text-start">
+                            <input type="hidden" name="mode" value="hotel">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">City / Location</label>
+                                <input type="text" name="origin" class="form-control" value="Bangalore" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Category</label>
+                                <select name="category" class="form-select">
+                                    <option value="all">All Categories</option>
+                                    <option value="luxury">Luxury Suites</option>
+                                    <option value="budget">Budget Friendly</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Check-in Date</label>
+                                <input type="date" name="date" class="form-control" value="2026-10-01" required>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                    <i class="bi bi-search me-1"></i>Find Hotels
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AWS Cloud Architecture Highlights (Scenarios 1, 2, 3) -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h6 class="text-primary fw-bold text-uppercase tracking-wider">AWS Cloud Architecture</h6>
+            <h2 class="fw-bold">Engineered for Scalability, Speed & Reliability</h2>
+        </div>
+
+        <div class="row g-4">
+            <!-- Scenario 1 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm p-3 feature-card">
+                    <div class="card-body">
+                        <div class="feature-icon bg-primary text-white rounded-3 mb-3 d-inline-flex align-items-center justify-content-center p-3">
+                            <i class="bi bi-ticket-detailed fs-3"></i>
+                        </div>
+                        <h4 class="card-title fw-bold">Scenario 1: Multi-Mode Booking</h4>
+                        <p class="card-text text-muted">
+                            Unified search and reservation engine for Buses (with interactive seat selection), Trains, Flights, and Hotels hosted on Amazon EC2 for peak traffic resilience.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scenario 2 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm p-3 feature-card">
+                    <div class="card-body">
+                        <div class="feature-icon bg-warning text-dark rounded-3 mb-3 d-inline-flex align-items-center justify-content-center p-3">
+                            <i class="bi bi-bell-fill fs-3"></i>
+                        </div>
+                        <h4 class="card-title fw-bold">Scenario 2: Real-Time SNS Alerts</h4>
+                        <p class="card-text text-muted">
+                            Instant email notifications triggered via Amazon Simple Notification Service (SNS) topic <code>BookingConfirmation</code> immediately upon ticket confirmation or cancellation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scenario 3 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm p-3 feature-card">
+                    <div class="card-body">
+                        <div class="feature-icon bg-success text-white rounded-3 mb-3 d-inline-flex align-items-center justify-content-center p-3">
+                            <i class="bi bi-speedometer2 fs-3"></i>
+                        </div>
+                        <h4 class="card-title fw-bold">Scenario 3: Dynamic Travel History</h4>
+                        <p class="card-text text-muted">
+                            Responsive dashboard backed by Amazon DynamoDB Global Secondary Index (<code>UserBookingsIndex</code>) for sub-10ms query speeds and 1-click cancellation workflows.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

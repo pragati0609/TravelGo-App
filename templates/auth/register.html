@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}TravelGo | Register{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-person-plus-fill fs-1 text-primary"></i>
+                        <h2 class="fw-bold mt-2">Create an Account</h2>
+                        <p class="text-muted small">Register to book buses, trains, flights, and hotels</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.register') }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Full Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" name="full_name" class="form-control" placeholder="e.g. John Doe" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" name="email" class="form-control" placeholder="john@example.com" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" name="phone" class="form-control" placeholder="+91 9876543210">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Password</label>
+                                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Confirm Password</label>
+                                <input type="password" name="confirm_password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-check-circle me-1"></i>Complete Registration
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4 pt-2 border-top">
+                        <span class="text-muted small">Already have an account?</span>
+                        <a href="{{ url_for('auth.login') }}" class="small fw-semibold text-primary ms-1">Login Here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

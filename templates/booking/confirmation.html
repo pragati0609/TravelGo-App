@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}TravelGo | Booking Confirmed{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <!-- Header Banner -->
+                <div class="bg-success text-white p-4 text-center">
+                    <i class="bi bi-check-circle-fill display-3 mb-2"></i>
+                    <h2 class="fw-bold mb-1">Booking Confirmed!</h2>
+                    <p class="mb-0 opacity-90">Your reservation has been securely saved in DynamoDB</p>
+                </div>
+
+                <!-- SNS Notification Alert Banner -->
+                <div class="bg-warning-subtle text-warning-emphasis p-3 border-bottom text-center small fw-semibold">
+                    <i class="bi bi-bell-fill me-1"></i>
+                    AWS SNS Notification Dispatched:
+                    {% if booking.sns_message_id %}
+                        <code>{{ booking.sns_message_id }}</code>
+                    {% else %}
+                        <code>SNS Topic: BookingConfirmation</code>
+                    {% endif %}
+                </div>
+
+                <!-- Booking Details -->
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <div>
+                            <span class="text-muted small">Booking Reference</span>
+                            <h4 class="fw-bold text-primary mb-0">{{ booking.booking_id }}</h4>
+                        </div>
+                        <span class="badge bg-success px-3 py-2 fs-6">CONFIRMED</span>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Travel Mode</span>
+                            <div class="fw-semibold text-capitalize">
+                                {% if booking.travel_mode == 'bus' %}<i class="bi bi-bus-front text-primary me-1"></i>Bus
+                                {% elif booking.travel_mode == 'train' %}<i class="bi bi-train-front text-primary me-1"></i>Train
+                                {% elif booking.travel_mode == 'flight' %}<i class="bi bi-airplane text-primary me-1"></i>Flight
+                                {% else %}<i class="bi bi-building text-primary me-1"></i>Hotel
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Operator / Brand</span>
+                            <div class="fw-semibold">{{ booking.provider_name }}</div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Route</span>
+                            <div class="fw-semibold">{{ booking.origin }} &rarr; {{ booking.destination }}</div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Travel Date</span>
+                            <div class="fw-semibold">{{ booking.travel_date }}</div>
+                        </div>
+
+                        {% if booking.seat_numbers %}
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Seat Number(s)</span>
+                            <div class="fw-semibold text-primary">{{ booking.seat_numbers }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if booking.room_preference %}
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Accommodation Type</span>
+                            <div class="fw-semibold">{{ booking.room_preference }}</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-sm-6">
+                            <span class="text-muted small">Total Fare Paid</span>
+                            <div class="fw-bold fs-5 text-success">₹{{ booking.total_amount }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center pt-3 border-top">
+                        <button onclick="window.print()" class="btn btn-outline-secondary">
+                            <i class="bi bi-printer me-1"></i>Print Ticket
+                        </button>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('booking.index') }}" class="btn btn-outline-primary">Book Another</a>
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary fw-semibold">
+                                <i class="bi bi-speedometer2 me-1"></i>Go to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

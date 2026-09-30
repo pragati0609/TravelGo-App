@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}TravelGo | Select Bus Seats - {{ listing.provider }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">{{ listing.provider }}</h3>
+            <p class="text-muted mb-0">
+                <i class="bi bi-geo-alt me-1"></i>{{ listing.origin }} &rarr; {{ listing.destination }}
+                &nbsp;|&nbsp; <i class="bi bi-calendar-event me-1"></i>{{ date }}
+                &nbsp;|&nbsp; <i class="bi bi-clock me-1"></i>{{ listing.departure }} - {{ listing.arrival }}
+            </p>
+        </div>
+        <a href="{{ url_for('booking.search', mode='bus', origin=listing.origin, destination=listing.destination, date=date) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Search
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Seat Selection Grid -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-3">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Select Your Preferred Seats</h5>
+                    <!-- Legend -->
+                    <div class="d-flex gap-3 small">
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="seat-sample seat-available"></span> Available
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="seat-sample seat-selected"></span> Selected
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="seat-sample seat-occupied"></span> Booked
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bus Container -->
+                <div class="bus-container mx-auto p-4 rounded-4 shadow-sm border">
+                    <!-- Driver Cabin -->
+                    <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom text-muted">
+                        <span class="small fw-semibold text-uppercase tracking-wider">Front of Bus</span>
+                        <div class="driver-wheel text-end" title="Driver Cabin">
+                            <i class="bi bi-compass fs-3 text-secondary"></i>
+                        </div>
+                    </div>
+
+                    <!-- Seat Rows (Lower Deck) -->
+                    <div class="seat-layout" id="seatMatrix">
+                        <!-- Row 1 -->
+                        <div class="seat-row d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat" data-seat="L1" data-price="{{ listing.price }}">L1</button>
+                                <button type="button" class="seat" data-seat="L2" data-price="{{ listing.price }}">L2</button>
+                            </div>
+                            <div class="aisle"></div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat occupied" disabled data-seat="L3">L3</button>
+                                <button type="button" class="seat" data-seat="L4" data-price="{{ listing.price }}">L4</button>
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="seat-row d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat" data-seat="L5" data-price="{{ listing.price }}">L5</button>
+                                <button type="button" class="seat" data-seat="L6" data-price="{{ listing.price }}">L6</button>
+                            </div>
+                            <div class="aisle"></div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat" data-seat="L7" data-price="{{ listing.price }}">L7</button>
+                                <button type="button" class="seat" data-seat="L8" data-price="{{ listing.price }}">L8</button>
+                            </div>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="seat-row d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat occupied" disabled data-seat="L9">L9</button>
+                                <button type="button" class="seat occupied" disabled data-seat="L10">L10</button>
+                            </div>
+                            <div class="aisle"></div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat" data-seat="L11" data-price="{{ listing.price }}">L11</button>
+                                <button type="button" class="seat" data-seat="L12" data-price="{{ listing.price }}">L12</button>
+                            </div>
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="seat-row d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat" data-seat="L13" data-price="{{ listing.price }}">L13</button>
+                                <button type="button" class="seat" data-seat="L14" data-price="{{ listing.price }}">L14</button>
+                            </div>
+                            <div class="aisle"></div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="seat" data-seat="L15" data-price="{{ listing.price }}">L15</button>
+                                <button type="button" class="seat" data-seat="L16" data-price="{{ listing.price }}">L16</button>
+                            </div>
+                        </div>
+
+                        <!-- Row 5 (Rear 5-seater) -->
+                        <div class="seat-row d-flex justify-content-between">
+                            <div class="d-flex gap-2 w-100 justify-content-between">
+                                <button type="button" class="seat" data-seat="L17" data-price="{{ listing.price }}">L17</button>
+                                <button type="button" class="seat" data-seat="L18" data-price="{{ listing.price }}">L18</button>
+                                <button type="button" class="seat" data-seat="L19" data-price="{{ listing.price }}">L19</button>
+                                <button type="button" class="seat" data-seat="L20" data-price="{{ listing.price }}">L20</button>
+                                <button type="button" class="seat" data-seat="L21" data-price="{{ listing.price }}">L21</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout / Summary Panel -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-3 sticky-top" style="top: 80px;">
+                <h5 class="fw-bold mb-3 border-bottom pb-2">Booking Summary</h5>
+
+                <div class="mb-3">
+                    <span class="text-muted small">Selected Operator</span>
+                    <div class="fw-semibold text-primary">{{ listing.provider }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-muted small">Route & Date</span>
+                    <div class="fw-semibold">{{ listing.origin }} &rarr; {{ listing.destination }}</div>
+                    <div class="small text-muted">{{ date }} ({{ listing.departure }})</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-muted small">Selected Seats</span>
+                    <div class="fw-bold fs-5 text-dark" id="displaySeats">None</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-muted small">Fare per Seat</span>
+                    <div class="fw-semibold">₹{{ listing.price }}</div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fs-5 fw-bold">Total Fare:</span>
+                    <span class="fs-4 fw-bold text-success" id="displayTotal">₹0</span>
+                </div>
+
+                <!-- Form to Submit to AWS DynamoDB & SNS -->
+                <form action="{{ url_for('booking.book') }}" method="POST" id="seatBookingForm">
+                    <input type="hidden" name="listing_id" value="{{ listing.id }}">
+                    <input type="hidden" name="travel_mode" value="bus">
+                    <input type="hidden" name="provider_name" value="{{ listing.provider }}">
+                    <input type="hidden" name="origin" value="{{ listing.origin }}">
+                    <input type="hidden" name="destination" value="{{ listing.destination }}">
+                    <input type="hidden" name="travel_date" value="{{ date }}">
+                    <input type="hidden" name="seat_numbers" id="inputSeatNumbers" value="">
+                    <input type="hidden" name="total_amount" id="inputTotalAmount" value="0">
+
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" id="btnConfirmBooking" disabled>
+                        <i class="bi bi-shield-check me-1"></i>Confirm & Reserve
+                    </button>
+                </form>
+
+                <div class="mt-3 text-center text-muted small">
+                    <i class="bi bi-bell-fill text-warning me-1"></i>Instant AWS SNS email confirmation will be sent upon booking.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const seats = document.querySelectorAll('.seat:not(.occupied)');
+        const displaySeats = document.getElementById('displaySeats');
+        const displayTotal = document.getElementById('displayTotal');
+        const inputSeats = document.getElementById('inputSeatNumbers');
+        const inputTotal = document.getElementById('inputTotalAmount');
+        const btnConfirm = document.getElementById('btnConfirmBooking');
+        const unitPrice = parseInt("{{ listing.price }}");
+
+        let selected = [];
+
+        seats.forEach(seat => {
+            seat.addEventListener('click', function () {
+                const seatId = this.dataset.seat;
+                if (this.classList.contains('selected')) {
+                    this.classList.remove('selected');
+                    selected = selected.filter(s => s !== seatId);
+                } else {
+                    this.classList.add('selected');
+                    selected.push(seatId);
+                }
+
+                updateSummary();
+            });
+        });
+
+        function updateSummary() {
+            if (selected.length === 0) {
+                displaySeats.textContent = 'None';
+                displayTotal.textContent = '₹0';
+                inputSeats.value = '';
+                inputTotal.value = '0';
+                btnConfirm.disabled = true;
+            } else {
+                displaySeats.textContent = selected.join(', ');
+                const total = selected.length * unitPrice;
+                displayTotal.textContent = '₹' + total;
+                inputSeats.value = selected.join(', ');
+                inputTotal.value = total;
+                btnConfirm.disabled = false;
+            }
+        }
+    });
+</script>
+{% endblock %}

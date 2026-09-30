@@ -1,0 +1,121 @@
+/* TravelGo Custom Theme */
+:root {
+    --primary-color: #0d6efd;
+    --primary-dark: #0a58ca;
+    --accent-color: #ffc107;
+    --seat-available: #e9ecef;
+    --seat-selected: #198754;
+    --seat-occupied: #dc3545;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #212529;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 480px;
+    display: flex;
+    align-items: center;
+}
+
+.booking-card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+/* Feature Cards */
+.feature-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 0.75rem;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Bus Container & Seat Layout */
+.bus-container {
+    max-width: 480px;
+    background-color: #fdfdfd;
+    border: 2px solid #dee2e6;
+}
+
+.aisle {
+    width: 36px;
+}
+
+.seat {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.seat:hover:not(.occupied):not(:disabled) {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    transform: scale(1.08);
+}
+
+.seat.selected {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: white !important;
+    box-shadow: 0 0 10px rgba(25, 135, 84, 0.4);
+    transform: scale(1.05);
+}
+
+.seat.occupied {
+    background-color: #dee2e6;
+    border-color: #ced4da;
+    color: #adb5bd;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Seat Samples (Legend) */
+.seat-sample {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.seat-sample.seat-available {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+}
+
+.seat-sample.seat-selected {
+    background-color: #198754;
+}
+
+.seat-sample.seat-occupied {
+    background-color: #dee2e6;
+    border: 1px solid #ced4da;
+}
+
+/* Listing Items */
+.listing-item {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid transparent !important;
+}
+
+.listing-item:hover {
+    border-color: #0d6efd !important;
+    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.08) !important;
+}
