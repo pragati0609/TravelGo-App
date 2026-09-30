@@ -1,155 +1,146 @@
-# TravelGo: Entity Relationship (ER) Diagram & Database Schema Design
+# TravelGo: Entity Relationship (ER) Diagram & Schema Design
 
 > **Epic**: Entity Relationship (ER) Diagram  
 > **Task 1**: Entity Relationship (ER) Diagram for TravelGo  
-> **Database Engine**: Amazon DynamoDB (NoSQL Key-Value & Document Database)
+> **Database**: Amazon DynamoDB (NoSQL Cloud Database)
 
 ---
 
-## 1. Executive Summary
+## 1. Description & Overview
 
-**TravelGo** is a cloud-powered, real-time travel booking platform deployed on AWS. The data layer utilizes **Amazon DynamoDB** to provide single-digit millisecond latency, seamless horizontal scalability, and high availability without managing relational database servers.
+The Entity-Relationship (ER) diagram models the core data structure of the **TravelGo** cloud platform. It defines the entities, their respective attributes, primary and foreign key constraints, and cardinality rules required to deliver a multi-mode cloud booking platform.
 
-To support user registration, multi-mode travel search and reservation (Buses, Trains, Flights, and Hotels), and personal travel history retrieval, the database schema is partitioned into two primary core tables along with an inventory catalog table:
-1. **`TravelGo_Users`**: User registration, profile details, and authentication credentials.
-2. **`TravelGo_Bookings`**: Booking records across all transportation and accommodation modes with status tracking (`CONFIRMED`, `CANCELLED`).
-3. **`TravelGo_Listings`**: Available travel inventory (routes, schedules, vehicle/room types, pricing, and seat layouts).
+### Entities Involved:
+1. **Users**: Represents individuals registered on the TravelGo platform.
+2. **Bookings**: Represents individual travel or accommodation reservations (bus, train, flight, hotel) made by users.
+
+### Primary Keys:
+- **`Users`**: `email (PK)` uniquely identifies each user and serves as their primary identifier.
+- **`Bookings`**: `booking_id (PK)` uniquely identifies each reservation record.
+
+### Relationships & Cardinality:
+- **Users to Bookings**: **1 to Many (1:N)**.
+  - One user can initiate multiple bookings across buses, trains, flights, and hotels over time.
+  - Each booking record is explicitly tied back to exactly one user via `email (FK)`.
 
 ---
 
-## 2. Entity Relationship (ER) Diagram
+## 2. Visual Entity-Relationship Diagram
+
+### Conceptual Diagram (Matching Course Specification)
+
+```mermaid
+graph TD
+    %% Entities
+    U(["<b>Users</b><br/>(Entity)"]):::userEntity
+    B(["<b>Bookings</b><br/>(Entity)"]):::bookingEntity
+
+    %% Users Attributes
+    U --- U_PK(["<b>email (PK)</b>"]):::pk
+    U --- U_name(["name"]):::attr
+    U --- U_pass(["password"]):::attr
+    U --- U_logins(["logins"]):::attr
+
+    %% Relationship
+    U -->|1 to Many| B
+
+    %% Bookings Attributes
+    B --- B_PK(["<b>booking_id (PK)</b>"]):::pk
+    B --- B_FK(["<b>email (FK)</b>"]):::fk
+    B --- B_type(["type"]):::attr
+    B --- B_src(["source"]):::attr
+    B --- B_dst(["destination"]):::attr
+    B --- B_date(["date"]):::attr
+    B --- B_seat(["seat"]):::attr
+    B --- B_details(["details"]):::attr
+    B --- B_price(["price"]):::attr
+    B --- B_pm(["payment_method"]):::attr
+    B --- B_pref(["payment_reference"]):::attr
+
+    %% Styling
+    classDef userEntity fill:#7ec8e3,stroke:#1a6f8f,stroke-width:2px,color:#000;
+    classDef bookingEntity fill:#ffb3ba,stroke:#d9534f,stroke-width:2px,color:#000;
+    classDef pk fill:#fff,stroke:#333,stroke-width:2px,stroke-dasharray: 0,color:#000;
+    classDef fk fill:#fff,stroke:#333,stroke-width:1.5px,stroke-dasharray: 3 3,color:#000;
+    classDef attr fill:#fff,stroke:#666,stroke-width:1px,color:#000;
+```
+
+---
+
+## 3. Relational & Schema Specification
 
 ```mermaid
 erDiagram
-    USERS ||--o{ BOOKINGS : "places (1:N)"
-    LISTINGS ||--o{ BOOKINGS : "reserved_in (1:N)"
+    Users ||--o{ Bookings : "makes (1 to Many)"
 
-    USERS {
-        string email PK "Partition Key (Unique)"
-        string user_id "UUID v4"
-        string full_name "User Full Name"
-        string phone "Contact Number"
-        string password_hash "Werkzeug / Argon2 Hash"
-        string role "Role (user / admin)"
-        string created_at "ISO-8601 Timestamp"
-        string updated_at "ISO-8601 Timestamp"
+    Users {
+        string email PK "Primary Key (Unique user identifier)"
+        string name "User's full name"
+        string password "Hashed credentials (PBKDF2/Werkzeug)"
+        int logins "Login counter & session metadata"
     }
 
-    BOOKINGS {
-        string booking_id PK "Partition Key (UUID v4)"
-        string user_email GSI_PK "Global Secondary Index PK"
-        string booking_date GSI_SK "Global Secondary Index SK (ISO-8601)"
-        string listing_id "Foreign reference to TravelGo_Listings"
-        string travel_mode "bus | train | flight | hotel"
-        string provider_name "e.g., IndiGo, KSRTC, Taj Residency"
-        string origin "Departure City / Source"
-        string destination "Arrival City / Destination"
-        string departure_time "ISO-8601 or Time String"
-        string arrival_time "ISO-8601 or Time String"
-        string seat_numbers "Selected Seat IDs (e.g. '12A, 12B')"
-        string room_preference "luxury | budget | executive"
-        number total_amount "Total cost in INR"
-        string currency "INR"
-        string booking_status "CONFIRMED | CANCELLED"
-        string payment_status "PAID | REFUNDED"
-        string sns_message_id "AWS SNS Notification Message ID"
-        string created_at "ISO-8601 Timestamp"
-        string cancelled_at "Cancellation Timestamp (nullable)"
-    }
-
-    LISTINGS {
-        string listing_id PK "Partition Key (UUID v4)"
-        string travel_mode SK "Sort Key (bus | train | flight | hotel)"
-        string provider_name "Operator or Hotel Brand"
-        string origin "Source City"
-        string destination "Destination City"
-        string departure_time "Departure Time"
-        string arrival_time "Arrival Time"
-        number base_price "Base price per ticket / room"
-        string category "budget | luxury | premium"
-        number available_seats "Count of unbooked seats / rooms"
-        string seat_layout "JSON schema of rows & seat status"
-        number rating "Customer Rating (1.0 to 5.0)"
+    Bookings {
+        string booking_id PK "Primary Key (Unique reservation identifier)"
+        string email FK "Foreign Key referencing Users(email)"
+        string type "Travel mode (bus | train | flight | hotel)"
+        string source "Origin departure location"
+        string destination "Arrival destination location"
+        string date "Travel / check-in date (YYYY-MM-DD)"
+        string seat "Seat number(s) or room details"
+        string details "Operator name, flight number, or hotel name"
+        number price "Total cost in INR"
+        string payment_method "Payment method (UPI, Credit Card)"
+        string payment_reference "Unique payment transaction ID"
     }
 ```
 
 ---
 
-## 3. Table Schema Specifications (DynamoDB Design)
+## 4. Entity Attribute Dictionary
 
-### Table 1: `TravelGo_Users`
-Stores user profile information, authentication credentials, and account metadata.
+### Entity 1: `Users`
+Represents individuals registered on the TravelGo platform.
 
-| Attribute Name | DynamoDB Type | Key Type | Description |
+| Attribute | Key Type | Data Type | Description |
 |---|---|---|---|
-| `email` | String (`S`) | **Partition Key (PK)** | Unique user email address (login identifier) |
-| `user_id` | String (`S`) | Attribute | Unique internal identifier (UUID) |
-| `full_name` | String (`S`) | Attribute | Full legal name of user |
-| `phone` | String (`S`) | Attribute | Mobile phone number for SMS/Contact |
-| `password_hash` | String (`S`) | Attribute | Secure cryptographic hash (PBKDF2/Werkzeug) |
-| `role` | String (`S`) | Attribute | User role (`user` or `admin`) |
-| `created_at` | String (`S`) | Attribute | Account registration timestamp |
-| `updated_at` | String (`S`) | Attribute | Last profile modification timestamp |
+| `email` | **Primary Key (PK)** | String | Unique email address; serves as the user's login identifier. |
+| `name` | Attribute | String | Full name of the user. |
+| `password` | Attribute | String | Cryptographically hashed password for secure authentication. |
+| `logins` | Attribute | Integer | Number of successful logins or related session metadata. |
 
 ---
 
-### Table 2: `TravelGo_Bookings`
-Stores transaction records for all confirmed and cancelled bookings across buses, trains, flights, and hotels.
+### Entity 2: `Bookings`
+Captures comprehensive details for each travel or lodging reservation.
 
-| Attribute Name | DynamoDB Type | Key Type | Description |
+| Attribute | Key Type | Data Type | Description |
 |---|---|---|---|
-| `booking_id` | String (`S`) | **Partition Key (PK)** | Unique booking identifier (e.g. `BK-8931-ABCD`) |
-| `user_email` | String (`S`) | **GSI-1 PK** | Reference to user email (Foreign Key) |
-| `created_at` | String (`S`) | **GSI-1 SK** | Creation timestamp for chronological sorting |
-| `listing_id` | String (`S`) | Attribute | Reference to the selected listing |
-| `travel_mode` | String (`S`) | Attribute | Mode of travel: `bus`, `train`, `flight`, `hotel` |
-| `provider_name` | String (`S`) | Attribute | Carrier/Hotel name (e.g. `Orange Travels`, `IndiGo`) |
-| `origin` | String (`S`) | Attribute | Source location (e.g. `Hyderabad`) |
-| `destination` | String (`S`) | Attribute | Destination location (e.g. `Bangalore`) |
-| `travel_date` | String (`S`) | Attribute | Travel or check-in date (`YYYY-MM-DD`) |
-| `seat_numbers` | List / String (`S`) | Attribute | Comma-separated seat numbers (e.g. `S1, S2`) |
-| `room_preference` | String (`S`) | Attribute | Hotel tier (e.g. `Luxury Suite`, `Budget Standard`) |
-| `total_amount` | Number (`N`) | Attribute | Total fare charged (INR) |
-| `currency` | String (`S`) | Attribute | Currency code (`INR`) |
-| `booking_status` | String (`S`) | Attribute | Current status: `CONFIRMED` or `CANCELLED` |
-| `payment_status` | String (`S`) | Attribute | Payment status: `PAID` or `REFUNDED` |
-| `sns_message_id` | String (`S`) | Attribute | AWS SNS publish confirmation message ID |
-| `cancelled_at` | String (`S`) | Attribute | Timestamp of cancellation (or `null`) |
-
-#### Global Secondary Index (GSI): `UserBookingsIndex`
-- **Partition Key**: `user_email` (String)
-- **Sort Key**: `created_at` (String)
-- **Projection**: `ALL` attributes
-- **Purpose**: Enables rapid query: *"Fetch all past and upcoming bookings for a specific user, sorted from newest to oldest"* for the Dynamic User Dashboard (Scenario 3) in `O(1)` query complexity without full-table scans.
+| `booking_id` | **Primary Key (PK)** | String | Unique booking reference code (e.g. `BK-8931-ABCD`). |
+| `email` | **Foreign Key (FK)** | String | Links the booking back to the user who made it (`Users.email`). |
+| `type` | Attribute | String | Booking category: `bus`, `train`, `flight`, or `hotel`. |
+| `source` | Attribute | String | Origin / departure city (e.g., `Hyderabad`). |
+| `destination` | Attribute | String | Destination / arrival city (e.g., `Bangalore`). |
+| `date` | Attribute | String | Date of travel or hotel check-in (`YYYY-MM-DD`). |
+| `seat` | Attribute | String | Assigned seat number(s) (e.g., `2A, 3A`) or room preference. |
+| `details` | Attribute | String | Service provider / vehicle details (e.g., `Orange Travels`). |
+| `price` | Attribute | Number | Total cost charged for the reservation in INR. |
+| `payment_method` | Attribute | String | Mode of payment (e.g., `UPI`, `Credit Card`). |
+| `payment_reference` | Attribute | String | Unique transaction reference identifier (e.g. `TXN-UUID`). |
 
 ---
 
-### Table 3: `TravelGo_Listings` (Inventory Catalog)
-Holds transportation schedules and hotel properties searchable by users.
+## 5. Normalization, Integrity & Cloud Alignment
 
-| Attribute Name | DynamoDB Type | Key Type | Description |
-|---|---|---|---|
-| `listing_id` | String (`S`) | **Partition Key (PK)** | Listing ID (e.g. `BUS-101`, `HTL-504`) |
-| `travel_mode` | String (`S`) | Attribute | `bus`, `train`, `flight`, `hotel` |
-| `provider_name` | String (`S`) | Attribute | Service operator |
-| `origin` | String (`S`) | Attribute | Origin city |
-| `destination` | String (`S`) | Attribute | Destination city |
-| `departure_time` | String (`S`) | Attribute | Departure / Check-in time |
-| `arrival_time` | String (`S`) | Attribute | Arrival / Check-out time |
-| `base_price` | Number (`N`) | Attribute | Starting price per passenger / room |
-| `category` | String (`S`) | Attribute | Classification: `luxury` or `budget` |
-| `available_seats` | Number (`N`) | Attribute | Total remaining seats / rooms |
-| `rating` | Number (`N`) | Attribute | Review rating (e.g. `4.8`) |
-
----
-
-## 4. Cardinality & Relationship Rationales
-
-1. **User to Bookings (1 to Many)**:
-   - A registered user can book multiple tickets across different travel modes over time.
-   - Handled via `TravelGo_Bookings` GSI `UserBookingsIndex` where `user_email` partitions the query space.
-2. **Listings to Bookings (1 to Many)**:
-   - A single bus, flight, train, or hotel room inventory listing can receive reservations from multiple distinct users until capacity is exhausted.
-3. **NoSQL Access Pattern Optimization**:
-   - DynamoDB utilizes hash partitioning on Primary Keys. By using `email` for users and `booking_id` for bookings, write operations distribute uniformly across partitions.
-   - Real-time updates (confirmations and cancellations) operate directly on single item key lookups (`GetItem`, `UpdateItem`) with sub-10ms response times.
+1. **Normalization & Data Integrity**:
+   - The design follows standard **Third Normal Form (3NF)**:
+     - User credentials and profile attributes reside strictly in `Users`.
+     - Transactional reservation data resides strictly in `Bookings`.
+     - Eliminates data redundancy and avoids update anomalies.
+2. **Foreign Key Integrity**:
+   - `Bookings.email` references `Users.email`, guaranteeing every reservation maps to a valid registered customer.
+3. **DynamoDB Cloud Alignment**:
+   - In Amazon DynamoDB:
+     - Table `TravelGo_Users` uses `email` as its **Partition Key (HASH)**.
+     - Table `TravelGo_Bookings` uses `booking_id` as its **Partition Key (HASH)**.
+     - To enable instantaneous user dashboard queries without scanning, a **Global Secondary Index (GSI)** named `UserBookingsIndex` is created on `user_email` (Partition Key) + `created_at` (Sort Key).

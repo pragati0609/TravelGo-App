@@ -121,9 +121,12 @@ class AWSService:
         user_item = {
             'email': email,
             'user_id': user_id,
-            'full_name': full_name.strip(),
+            'name': full_name.strip(),          # Exact ER Diagram attribute
+            'full_name': full_name.strip(),     # Display alias
             'phone': phone.strip(),
+            'password': password_hash,          # Exact ER Diagram attribute
             'password_hash': password_hash,
+            'logins': 1,                        # Exact ER Diagram attribute (login counter)
             'role': 'user',
             'created_at': now,
             'updated_at': now
@@ -168,11 +171,27 @@ class AWSService:
             return {"success": False, "error": "Invalid email or password."}
 
         if check_password_hash(user['password_hash'], password):
+            # Increment logins count as per ER diagram specification
+            current_logins = user.get('logins', 1) + 1
+            user['logins'] = current_logins
+            if self._is_live_aws:
+                try:
+                    table = self.dynamodb.Table(self.users_table_name)
+                    table.update_item(
+                        Key={'email': email},
+                        UpdateExpression="SET logins = logins + :val",
+                        ExpressionAttributeValues={':val': 1}
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not update logins count in DynamoDB: {e}")
+
             return {
                 "success": True,
                 "user": {
                     "email": user['email'],
-                    "full_name": user['full_name'],
+                    "name": user.get('name', user.get('full_name', '')),
+                    "full_name": user.get('full_name', ''),
+                    "logins": current_logins,
                     "phone": user.get('phone', ''),
                     "role": user.get('role', 'user')
                 }
@@ -186,21 +205,41 @@ class AWSService:
         """Creates a travel booking and triggers an instant SNS notification."""
         booking_id = f"BK-{uuid.uuid4().hex[:8].upper()}"
         now = datetime.now(timezone.utc).isoformat()
+        txn_ref = f"TXN-{uuid.uuid4().hex[:12].upper()}"
+        b_type = booking_data.get('travel_mode', 'bus')
+        b_source = booking_data.get('origin', '')
+        b_destination = booking_data.get('destination', '')
+        b_date = booking_data.get('travel_date', '')
+        b_seat = booking_data.get('seat_numbers', '') or booking_data.get('room_preference', '')
+        b_details = booking_data.get('provider_name', 'TravelGo Express')
+        b_price = int(booking_data.get('total_amount', 0))
 
         item = {
-            'booking_id': booking_id,
-            'user_email': user_email.strip().lower(),
-            'created_at': now,
-            'travel_mode': booking_data.get('travel_mode', 'bus'),
-            'provider_name': booking_data.get('provider_name', 'TravelGo Express'),
-            'origin': booking_data.get('origin', ''),
-            'destination': booking_data.get('destination', ''),
-            'travel_date': booking_data.get('travel_date', ''),
+            # --- Exact ER Diagram Attributes (SkillWallet Schema) ---
+            'booking_id': booking_id,                           # PK
+            'email': user_email.strip().lower(),                # FK referencing Users(email)
+            'type': b_type,                                     # bus | train | flight | hotel
+            'source': b_source,                                 # Origin location
+            'destination': b_destination,                       # Destination location
+            'date': b_date,                                     # Date of travel
+            'seat': b_seat,                                     # Seat number or room tier
+            'details': b_details,                               # Carrier / Hotel name
+            'price': b_price,                                   # Total cost
+            'payment_method': booking_data.get('payment_method', 'Credit Card / UPI'),
+            'payment_reference': txn_ref,                       # Unique transaction ID
+
+            # --- DynamoDB GSI & Platform Metadata ---
+            'user_email': user_email.strip().lower(),           # GSI Partition Key
+            'created_at': now,                                  # GSI Sort Key
+            'travel_mode': b_type,
+            'provider_name': b_details,
+            'origin': b_source,
+            'travel_date': b_date,
             'departure_time': booking_data.get('departure_time', '10:00 AM'),
             'arrival_time': booking_data.get('arrival_time', '06:00 PM'),
-            'seat_numbers': booking_data.get('seat_numbers', ''),
+            'seat_numbers': b_seat,
             'room_preference': booking_data.get('room_preference', ''),
-            'total_amount': int(booking_data.get('total_amount', 0)),
+            'total_amount': b_price,
             'currency': 'INR',
             'booking_status': 'CONFIRMED',
             'payment_status': 'PAID',
